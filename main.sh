@@ -36,7 +36,9 @@ case "$1" in
 	;;
 	"-s")
 		cp "${CFG_FOLDER}/config_${NUM}.json" ${CFG_FILE}
-		echo "\nChange: COMPLETED."
+		echo -e "\nconfig_${NUM} selected."
+		cat "${CFG_FOLDER}/list" | sed -n "/^${NUM}\t/p"
+		echo "Change: COMPLETED."
 		service ssr-redir restart
 		echo -e "SSRrestart: COMPLETED."
 	;;
@@ -46,7 +48,9 @@ case "$1" in
 		"${SH_FOLDER}/tproxy.sh" ${CFG_FILE} ${CFG_FILE_T}
 
 		cp "${CFG_FOLDER}/config_${NUM}.json" ${CFG_FILE}
-		echo "\nChange: COMPLETED."
+		echo -e "\nconfig_${NUM} selected."
+		cat "${CFG_FOLDER}/list" | sed -n "/^${NUM}\t/p"
+		echo "Change: COMPLETED."
 		service ssr-redir restart
 		echo -e "SSRrestart: COMPLETED."
 
