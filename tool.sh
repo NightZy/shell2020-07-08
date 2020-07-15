@@ -30,8 +30,8 @@ decode(){
 # 逐行输出如下格式的节点信息
 # server&port&protocol&method&obfs&password&obfsparam&protoparam&remarks&group
 getlink(){
-	# local data=$(decode $(curl -s ${URL}))
-	local data=$(decode $(cat sub))
+	local data=$(decode $(curl -s ${URL}))
+	# local data=$(decode $(cat sub))
 	if [ -z "${data}" ]
 	then
 		return 1
@@ -156,7 +156,7 @@ main(){
 	fi
 
 	OutputConfig "${links}"
-
+	echo "Write: COMPLETED."
 }
 
 main
