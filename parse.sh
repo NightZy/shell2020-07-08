@@ -1,18 +1,12 @@
 #!/bin/bash
 
-# 请使用管理员身份运行
-######################################################################################
-
-# 订阅链接
-URL='https://example.com/example'
-# 配置文件绝对路径
-CFG_FILE='/example/config.json'
-# 端口
-SSR_PORT=10808
-
-######################################################################################
-
+URL=$1
+CFG_FILE=$2
+SSR_PORT=$3
 CFG_FOLDER=''
+SERVERS=()
+PORTS=()
+INFO=''
 
 # （不在末尾填充'='的）base64url 解码
 decode(){
@@ -106,7 +100,7 @@ SSRconfig(){
 	echo "${config}"
 }
 
-OutputConfig(){
+WriteConfig(){
 	local links=$(echo -e "${1}" | tr '\n' '^')
 	local i=1
 	local num=1
@@ -123,16 +117,33 @@ OutputConfig(){
 		local protoparam=$(echo ${nodeinfo} | cut -d \& -f 8)
 		local remarks=$(echo ${nodeinfo} | cut -d \& -f 9)
 		local group=$(echo ${nodeinfo} | cut -d \& -f 10)
-
+		
 		if [ ${#port} -lt 2 ] # 判断是否是用来通告信息的假节点，一般这种节点会使用10以下的端口
 		then # 从中获取通告信息
-			info=${info}${remarks}"\n"
-		else # 输出 SSR 配置文件到配置文件目录
-			echo $(SSRconfig "${server}" "${port}" "${protocol}" "${method}" "${obfs}" "${password}" "${obfsparam}" "${protoparam}" "${remarks}" "${group}") > $(echo ${CFG_FOLDER}'/config_'${num}'.json')
-			num=$(expr ${num} + 1)
+			INFO=${INFO}${remarks}"\n"
+		else # 输出 SSR 配置文件到配置文件目录；记录各服务器地址和使用过的端口
+			echo "$(SSRconfig "${server}" "${port}" "${protocol}" "${method}" "${obfs}" "${password}" "${obfsparam}" "${protoparam}" "${remarks}" "${group}")" > $(echo ${CFG_FOLDER}'/config_'${num}'.json')
+
+			SERVERS[${num}]=${server}
+			local exist=0
+			for p in ${PORTS[@]}
+			do
+				if [ ${p} = ${port} ]
+				then
+					exist=1
+					break
+				fi
+			done
+			if [ $exist == 0 ]
+			then
+				PORTS[${#PORTS[@]}]=${port}
+			fi
+
+			echo -e "${num}\t${group}\t${remarks}" >> "${CFG_FOLDER}/list"
+			let num++
 		fi
 		
-		i=$(expr ${i} + 1)
+		let i++
 		local nodeinfo="$(echo "${links}" | cut -d '^' -f ${i})"
 	done
 }
@@ -140,7 +151,7 @@ OutputConfig(){
 init(){
 	CFG_FOLDER=${CFG_FILE%/*}'/configs'
 	mkdir -p ${CFG_FOLDER}
-	rm -f "${CFG_FOLDER}/config_"*".json"
+	rm -f "${CFG_FOLDER}/config_"*".json" "${CFG_FOLDER}/servers" "${CFG_FOLDER}/ports" "${CFG_FOLDER}/list" "${CFG_FOLDER}/info"
 }
 
 main(){
@@ -155,8 +166,12 @@ main(){
 		return
 	fi
 
-	OutputConfig "${links}"
+	WriteConfig "${links}"
 	echo "Write: COMPLETED."
+
+	echo -e "$(date)\n${INFO}" > "${CFG_FOLDER}/info"
+	echo ${SERVERS[@]} > "${CFG_FOLDER}/servers"
+	echo ${PORTS[@]} > "${CFG_FOLDER}/ports"
 }
 
 main
